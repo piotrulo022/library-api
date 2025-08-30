@@ -6,7 +6,7 @@ CREATE TABLE books(
 
 CREATE TABLE users(
 	id SERIAL PRIMARY KEY,
-	card_number VARCHAR(6) NOT NULL UNIQUE CHECK (serial_number ~ '^[0-9]{6}$'),
+	card_number VARCHAR(6) NOT NULL UNIQUE CHECK (card_number ~ '^[0-9]{6}$'),
 	created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -19,4 +19,5 @@ CREATE TABLE bookloans (
     due_date DATE,
     return_date DATE,
     status loan_status DEFAULT 'borrowed',
+
 );
