@@ -2,7 +2,8 @@ from datetime import date
 from typing import List, Optional, Union
 
 from pydantic import BaseModel, validator
-from utils import is_valid_card_number, is_valid_serial_number
+
+from .utils import is_valid_card_number, is_valid_serial_number
 
 
 class BookCreate(BaseModel):
@@ -87,19 +88,23 @@ class BookStatusUpdate(BaseModel):
     class Config:
         validate_assignment = True
 
-    @validator("borrowed_date", pre=True, always=True)
-    def set_borrowed_date(cls, v, values):
-        if values.get("is_borrowed") and v is None:
-            return date.today()
-        return v
-
-    @validator("borrower_card_number")
+    @validator("borrower_card_number", always=True)
     def validate_card_number(cls, v, values):
-        if values.get("is_borrowed") and v is None:
-            raise ValueError("Borrower card number is required when borrowing a book")
-        if v is not None:
+        is_borrowed = values.get("is_borrowed")
+
+        if is_borrowed:
+            if not v:
+                raise ValueError(
+                    "Borrower card number is required when borrowing a book"
+                )
             if not is_valid_card_number(v):
                 raise ValueError("Card number must be 6 digits")
+        else:
+            if v is not None:
+                raise ValueError(
+                    "Borrower card number must not be provided when returning a book"
+                )
+
         return v
 
     @validator("borrowed_date")

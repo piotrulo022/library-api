@@ -1,4 +1,5 @@
 import os
+from contextlib import contextmanager
 
 from sqlalchemy import (
     Boolean,
@@ -10,15 +11,34 @@ from sqlalchemy import (
     create_engine,
 )
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm import Session, relationship, sessionmaker
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/library"
 )
+
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
+
+class Database:
+    def __init__(self):
+        self.engine = engine
+        self._SessionLocal = SessionLocal
+
+    @contextmanager
+    def session(self) -> Session:
+        db = self._SessionLocal()
+        try:
+            yield db
+            db.commit()
+        except:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
 
 class Book(Base):
