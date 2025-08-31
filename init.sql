@@ -2,7 +2,7 @@ CREATE TABLE users(
 	id SERIAL PRIMARY KEY,
 	first_name VARCHAR NOT NULL,
 	last_name VARCHAR NOT NULL,
-	card_number VARCHAR(6) NOT NULL UNIQUE CHECK (card_number ~ '^[0-9]{6}$'),
+	card_number VARCHAR(6) NOT NULL UNIQUE CHECK (card_number ~ '^[0-9]{6}$')
 );
 
 
