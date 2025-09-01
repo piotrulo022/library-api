@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Optional, Union
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from .utils import is_valid_card_number, is_valid_serial_number
 
@@ -11,8 +11,9 @@ class BookCreate(BaseModel):
     title: str
     author: str
 
-    @validator("serial_number")
-    def validate_serial_number(cls, v):
+    @field_validator("serial_number")
+    @classmethod
+    def validate_serial_number(cls, v: str):
         if not is_valid_serial_number(v):
             raise ValueError("Serial number is not valid")
         return v
@@ -27,8 +28,7 @@ class BookResponse(BaseModel):
     borrow_date: Optional[date] = None
     borrower_card_number: Optional[str]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BookCreateResponse(BaseModel):
@@ -45,12 +45,12 @@ class BookStatusUpdate(BaseModel):
     borrowed_date: Optional[date] = None
     borrower_card_number: Optional[str] = None
 
-    class Config:
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
-    @validator("borrower_card_number", always=True)
-    def validate_card_number(cls, v, values):
-        is_borrowed = values.get("is_borrowed")
+    @field_validator("borrower_card_number")
+    @classmethod
+    def validate_card_number(cls, v: Optional[str], info):
+        is_borrowed = info.data.get("is_borrowed")
 
         if is_borrowed:
             if not v:
@@ -67,9 +67,10 @@ class BookStatusUpdate(BaseModel):
 
         return v
 
-    @validator("borrowed_date")
-    def validate_date_consistency(cls, v, values):
-        is_borrowed = values.get("is_borrowed")
+    @field_validator("borrowed_date")
+    @classmethod
+    def validate_date_consistency(cls, v: Optional[date], info):
+        is_borrowed = info.data.get("is_borrowed")
 
         if is_borrowed and v is None:
             return v
@@ -92,16 +93,14 @@ class UserResponse(BaseModel):
     last_name: str
     card_number: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserWithBooksResponse(BaseModel):
     user: UserResponse
     borrowed_books: Union[None, List[BookResponse]]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserCreate(BaseModel):
@@ -109,8 +108,9 @@ class UserCreate(BaseModel):
     first_name: str
     last_name: str
 
-    @validator("card_number")
-    def validate_card_number(cls, v):
+    @field_validator("card_number")
+    @classmethod
+    def validate_card_number(cls, v: str):
         if not is_valid_card_number(v):
             raise ValueError("Card number is not valid")
         return v
