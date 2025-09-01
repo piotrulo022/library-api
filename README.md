@@ -6,7 +6,7 @@ This project provides functionality for library staff to track and update the st
 
 ---
 
-## ✨ Features
+## Features
 
 The API allows staff to:
 
@@ -17,7 +17,7 @@ The API allows staff to:
 
 ---
 
-## 🚀 Tech Stack
+## Tech Stack
 - **uv**
 - **Python 3.12**  
 - **FastAPI**
@@ -28,7 +28,7 @@ The API allows staff to:
 
 ---
 
-## 🛠️ Installation & Running
+## Installation & Running
 Make sure you have **docker** and **docker compose** installed.
 
 ```bash
