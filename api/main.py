@@ -41,7 +41,7 @@ async def index():
     return RedirectResponse("/docs")
 
 
-@app.get("/books", response_model=List[schemas.BookResponse])
+@app.get("/books", response_model=List[schemas.BookResponse], tags=["BOOKS"])
 async def get_books(db: Session = Depends(get_db)):
     books_repo = BookRepository(db)
     try:
@@ -52,13 +52,13 @@ async def get_books(db: Session = Depends(get_db)):
         )
 
 
-@app.post("/books/")
+@app.post("/books/", response_model=schemas.BookCreateResponse, tags=["BOOKS"])
 async def create_new_book(book_data: schemas.BookCreate, db: Session = Depends(get_db)):
     books_repo = BookRepository(db)
     try:
         book = books_repo.add(book_data)
         db.commit()
-        return {"serial_number": book.serial_number}
+        return schemas.BookCreateResponse(serial_number=book.serial_number)
 
     except IntegrityError as e:
         db.rollback()
@@ -72,7 +72,7 @@ async def create_new_book(book_data: schemas.BookCreate, db: Session = Depends(g
         raise HTTPException(status_code=503, detail="Database error")
 
 
-@app.get("/books/{serial_number}", response_model=schemas.BookResponse)
+@app.get("/books/{serial_number}", response_model=schemas.BookResponse, tags=["BOOKS"])
 async def get_book_by_serial_number(serial_number: str, db: Session = Depends(get_db)):
     if not utils.is_valid_serial_number(serial_number):
         raise HTTPException(status_code=400, detail="Serial number is not valid")
@@ -81,9 +81,14 @@ async def get_book_by_serial_number(serial_number: str, db: Session = Depends(ge
     book = repo.get_by_serial(serial_number)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
+    return book
 
 
-@app.patch("/books/{serial_number}")
+@app.patch(
+    "/books/{serial_number}",
+    response_model=schemas.BookStatusUpdateResponse,
+    tags=["BOOKS"],
+)
 async def update_book(
     serial_number: str,
     update_book_data: schemas.BookStatusUpdate,
@@ -109,12 +114,14 @@ async def update_book(
 
     db.commit()
 
-    return {
-        "message": f"Successfully updated status of Book with serial {serial_number}"
-    }
+    return schemas.BookStatusUpdateResponse(
+        detail="Books status changed successfully", serial_number=serial_number
+    )
 
 
-@app.delete("/books/{serial_number}")
+@app.delete(
+    "/books/{serial_number}", response_model=schemas.BookDeleteResponse, tags=["BOOKS"]
+)
 async def delete_book(serial_number: str, db: Session = Depends(get_db)):
     if not utils.is_valid_serial_number(serial_number):
         raise HTTPException(status_code=400, detail="Serial number must be 6 digits")
@@ -128,10 +135,12 @@ async def delete_book(serial_number: str, db: Session = Depends(get_db)):
 
     db.commit()
 
-    return {"detail": f"Successfully deleted book with serial number {serial_number}"}
+    return schemas.BookDeleteResponse(
+        detail="Successfully deleted book", serial_number=serial_number
+    )
 
 
-@app.get("/users/")
+@app.get("/users/", response_model=List[schemas.UserResponse], tags=["USERS"])
 async def get_users(db: Session = Depends(get_db)):
     users_repo = UserRepository(db)
     try:
@@ -142,13 +151,16 @@ async def get_users(db: Session = Depends(get_db)):
         )
 
 
-@app.post("/users/")
+@app.post("/users/", response_model=schemas.UserCreateResponse, tags=["USERS"])
 async def create_new_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     users_repo = UserRepository(db)
     try:
         user = users_repo.add(user_data)
         db.commit()
-        return {"card_number": user.card_number}
+
+        return schemas.UserCreateResponse(
+            detail="Created new user successfully", card_number=user.card_number
+        )
     except IntegrityError as e:
         db.rollback()
         if f"Key (card_number)=({user_data.card_number}) already exists" in str(e.orig):
@@ -157,11 +169,11 @@ async def create_new_user(user_data: schemas.UserCreate, db: Session = Depends(g
                 detail=f"User with card number {user_data.card_number} already exists",
             )
         raise HTTPException(status_code=503, detail="Database error")
-    except:
-        db.rollback()
 
 
-@app.get("/users/{card_number}", response_model=schemas.UserResponse)
+@app.get(
+    "/users/{card_number}", response_model=schemas.UserWithBooksResponse, tags=["USERS"]
+)
 async def get_users_info(card_number: str, db: Session = Depends(get_db)):
     if not utils.is_valid_card_number(card_number):
         raise HTTPException(status_code=400, detail="Card number must be 6 digits")
@@ -171,16 +183,15 @@ async def get_users_info(card_number: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     borrowed_books = users_repo.get_users_borrowed_books(user)
 
-    return schemas.UserResponse(
-        id=user.id,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        card_number=user.card_number,
+    return schemas.UserWithBooksResponse(
+        user=user,
         borrowed_books=borrowed_books,
     )
 
 
-@app.delete("/users/{card_number}")
+@app.delete(
+    "/users/{card_number}", response_model=schemas.UserDeleteResponse, tags=["USERS"]
+)
 async def delete_user(card_number: str, db: Session = Depends(get_db)):
     if not utils.is_valid_card_number(card_number):
         raise HTTPException(status_code=400, detail="Card number must be 6 digits")
@@ -201,6 +212,9 @@ async def delete_user(card_number: str, db: Session = Depends(get_db)):
             raise HTTPException(status_code=500, detail=str(e))
 
     user = users_repo.delete(user.card_number)
+
     db.commit()
 
-    return {"detail": "Deleted user successfully"}
+    return schemas.UserDeleteResponse(
+        detail="Deleted user successfully", card_number=card_number
+    )
