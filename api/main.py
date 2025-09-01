@@ -43,6 +43,15 @@ async def index():
 
 @app.get("/books", response_model=List[schemas.BookResponse], tags=["BOOKS"])
 async def get_books(db: Session = Depends(get_db)):
+    """
+    Get all books from the database.
+
+    Returns:
+        List[schemas.BookResponse]: List of books.
+
+    Raises:
+        HTTPException(503): If database connection fails.
+    """
     books_repo = BookRepository(db)
     try:
         return books_repo.get_all()
@@ -54,6 +63,19 @@ async def get_books(db: Session = Depends(get_db)):
 
 @app.post("/books/", response_model=schemas.BookCreateResponse, tags=["BOOKS"])
 async def create_new_book(book_data: schemas.BookCreate, db: Session = Depends(get_db)):
+    """
+    Create a new book in the database.
+
+    Args:
+        book_data (schemas.BookCreate): Book data to insert.
+
+    Returns:
+        schemas.BookCreateResponse: Confirmation with book serial number.
+
+    Raises:
+        HTTPException(400): If book already exists.
+        HTTPException(503): For other database errors.
+    """
     books_repo = BookRepository(db)
     try:
         book = books_repo.add(book_data)
@@ -74,6 +96,19 @@ async def create_new_book(book_data: schemas.BookCreate, db: Session = Depends(g
 
 @app.get("/books/{serial_number}", response_model=schemas.BookResponse, tags=["BOOKS"])
 async def get_book_by_serial_number(serial_number: str, db: Session = Depends(get_db)):
+    """
+    Retrieve a book by its serial number.
+
+    Args:
+        serial_number (str): Book serial number.
+
+    Returns:
+        schemas.BookResponse: Book details.
+
+    Raises:
+        HTTPException(400): If serial number is invalid.
+        HTTPException(404): If book not found.
+    """
     if not utils.is_valid_serial_number(serial_number):
         raise HTTPException(status_code=400, detail="Serial number is not valid")
 
@@ -94,6 +129,21 @@ async def update_book(
     update_book_data: schemas.BookStatusUpdate,
     db: Session = Depends(get_db),
 ):
+    """
+    Update the status of a book (borrow or return).
+
+    Args:
+        serial_number (str): Book serial number.
+        update_book_data (schemas.BookStatusUpdate): Update details.
+
+    Returns:
+        schemas.BookStatusUpdateResponse: Confirmation with serial number.
+
+    Raises:
+        HTTPException(400): If serial number is invalid or book is unavailable.
+        HTTPException(404): If book or user not found.
+        HTTPException(422): If provided wrong arguments as body request (when returning a book, date and borrower card id must be not provided)
+    """
     if not utils.is_valid_serial_number(serial_number):
         raise HTTPException(status_code=400, detail="Serial number must be 6 digits")
 
@@ -123,6 +173,19 @@ async def update_book(
     "/books/{serial_number}", response_model=schemas.BookDeleteResponse, tags=["BOOKS"]
 )
 async def delete_book(serial_number: str, db: Session = Depends(get_db)):
+    """
+    Delete a book by its serial number.
+
+    Args:
+        serial_number (str): Book serial number.
+
+    Returns:
+        schemas.BookDeleteResponse: Confirmation message.
+
+    Raises:
+        HTTPException(400): If serial number is invalid.
+        HTTPException(404): If book not found.
+    """
     if not utils.is_valid_serial_number(serial_number):
         raise HTTPException(status_code=400, detail="Serial number must be 6 digits")
 
@@ -142,6 +205,15 @@ async def delete_book(serial_number: str, db: Session = Depends(get_db)):
 
 @app.get("/users/", response_model=List[schemas.UserResponse], tags=["USERS"])
 async def get_users(db: Session = Depends(get_db)):
+    """
+    Get all users.
+
+    Returns:
+        List[schemas.UserResponse]: List of users.
+
+    Raises:
+        HTTPException(503): If database connection fails.
+    """
     users_repo = UserRepository(db)
     try:
         return users_repo.get_all()
@@ -153,6 +225,19 @@ async def get_users(db: Session = Depends(get_db)):
 
 @app.post("/users/", response_model=schemas.UserCreateResponse, tags=["USERS"])
 async def create_new_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+    """
+    Create a new user.
+
+    Args:
+        user_data (schemas.UserCreate): User details.
+
+    Returns:
+        schemas.UserCreateResponse: Confirmation with card number.
+
+    Raises:
+        HTTPException(400): If user already exists.
+        HTTPException(503): For other database errors.
+    """
     users_repo = UserRepository(db)
     try:
         user = users_repo.add(user_data)
@@ -193,6 +278,20 @@ async def get_users_info(card_number: str, db: Session = Depends(get_db)):
     "/users/{card_number}", response_model=schemas.UserDeleteResponse, tags=["USERS"]
 )
 async def delete_user(card_number: str, db: Session = Depends(get_db)):
+    """
+    Delete a user and return borrowed books if any.
+
+    Args:
+        card_number (str): User's card number.
+
+    Returns:
+        schemas.UserDeleteResponse: Confirmation message.
+
+    Raises:
+        HTTPException(400): If card number is invalid.
+        HTTPException(404): If user not found.
+        HTTPException(500): If returning borrowed books fails.
+    """
     if not utils.is_valid_card_number(card_number):
         raise HTTPException(status_code=400, detail="Card number must be 6 digits")
     users_repo = UserRepository(db)
