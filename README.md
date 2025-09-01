@@ -32,7 +32,7 @@ The API allows staff to:
 Make sure you have **docker** and **docker compose** installed.
 
 ```bash
-git clone https://github.com/your-username/library-api.git
+git clone https://github.com/piotrulo022/library-api.git
 cd library-api
 docker compose up --build
 ```
@@ -50,6 +50,13 @@ You can use swagger  to do requests or use curl:
 curl -X GET http://localhost:8000/books
 ```
 
+## Testing
+Unit tests of API endpoints are inside `tests/` directory and can be ran with uv:
+
+
+```bash
+
+```
 ## Endpoints Overview
 
 ### Root
