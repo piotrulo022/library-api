@@ -2,6 +2,7 @@ from typing import List
 
 from fastapi import Depends, FastAPI
 from fastapi.exceptions import HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from modules import dbmodule, schemas, utils
 from modules.repositories import (
@@ -25,6 +26,14 @@ def get_db():
 
 
 app = FastAPI()
+cors_origins = ["*"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
