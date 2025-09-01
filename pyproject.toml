@@ -1,7 +1,7 @@
 [project]
 name = "library-api"
 version = "0.1.0"
-description = "Add your description here"
+description = "This project provieds simple API for library management system using FastAPI"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
