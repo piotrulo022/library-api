@@ -17,18 +17,6 @@ The API allows staff to:
 
 ---
 
-## 📖 Data Model
-
-Each book has the following attributes:
-
-- `serial_number` – unique six-digit number entered by staff (e.g., `123456`)  
-- `title` – book title  
-- `author` – book author  
-- `is_borrowed` – whether the book is currently borrowed  - `borrowed_by` – library card number of the borrower (six-digit number); `None` when  `is_borrowed = false`
-- `borrowed_by` – library card number of the borrower (six-digit number); `None` when  `is_borrowed = false`
-
----
-
 ## 🚀 Tech Stack
 - **uv**
 - **Python 3.12**  
@@ -61,3 +49,233 @@ You can use swagger  to do requests or use curl:
 # get all books from database
 curl -X GET http://localhost:8000/books
 ```
+
+## Endpoints Overview
+
+### Root
+
+- **GET /**  
+  Redirects to Swagger UI at `/docs`.
+
+---
+
+### Books Endpoints
+
+#### 1. Get all books
+- **Endpoint:** `GET /books`  
+- **Description:** Retrieves a list of all books in the library.  
+- **Response:** List of books with serial number, title, author, and borrow status.  
+- **Example:**
+```bash
+curl -X GET http://localhost:8000/books -H "accept: application/json"
+````
+
+---
+
+#### 2. Add a new book
+
+* **Endpoint:** `POST /books/`
+* **Description:** Adds a new book to the library database.
+* **Request Body:**
+
+```json
+{
+  "serial_number": "123456",
+  "title": "The Great Gatsby",
+  "author": "F. Scott Fitzgerald"
+}
+```
+
+* **Response:**
+
+```json
+{
+  "serial_number": "123456"
+}
+```
+
+---
+
+#### 3. Get a book by serial number
+
+* **Endpoint:** `GET /books/{serial_number}`
+* **Description:** Retrieves details of a single book.
+* **Path Parameter:**
+
+  * `serial_number` – 6-digit book serial number
+* **Response:** Book details including borrow status.
+* **Example:**
+
+```bash
+curl -X GET http://localhost:8000/books/123456 -H "accept: application/json"
+```
+
+---
+
+#### 4. Update book status
+
+* **Endpoint:** `PATCH /books/{serial_number}`
+* **Description:** Marks a book as borrowed or returned.
+* **Path Parameter:**
+
+  * `serial_number` – 6-digit book serial number
+* **Request Body Example (borrow a book):**
+
+```json
+{
+  "is_borrowed": true,
+  "borrowed_by": "654321"
+}
+```
+
+* **Request Body Example (return a book):**
+
+```json
+{
+  "is_borrowed": false
+}
+```
+
+* **Response:**
+
+```json
+{
+  "detail": "Books status changed successfully",
+  "serial_number": "123456"
+}
+```
+
+* **Errors:**
+
+  * `400` – invalid serial number or book already borrowed/available
+  * `404` – book or user not found
+
+---
+
+#### 5. Delete a book
+
+* **Endpoint:** `DELETE /books/{serial_number}`
+* **Description:** Deletes a book from the library.
+* **Path Parameter:**
+
+  * `serial_number` – 6-digit book serial number
+* **Response:**
+
+```json
+{
+  "detail": "Successfully deleted book",
+  "serial_number": "123456"
+}
+```
+
+* **Errors:**
+
+  * `400` – invalid serial number
+  * `404` – book not found
+
+---
+
+### Users Endpoints
+
+#### 1. Get all users
+
+* **Endpoint:** `GET /users/`
+* **Description:** Retrieves a list of all library users.
+* **Response:** List of users with card number, name, etc.
+* **Example:**
+
+```bash
+curl -X GET http://localhost:8000/users/ -H "accept: application/json"
+```
+
+---
+
+#### 2. Add a new user
+
+* **Endpoint:** `POST /users/`
+* **Description:** Adds a new user to the library database.
+* **Request Body:**
+
+```json
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "card_number": "654321"
+}
+```
+
+* **Response:**
+
+```json
+{
+  "detail": "Created new user successfully",
+  "card_number": "654321"
+}
+```
+
+* **Errors:**
+
+  * `400` – user with the same card number already exists
+
+---
+
+#### 3. Get user info with borrowed books
+
+* **Endpoint:** `GET /users/{card_number}`
+* **Description:** Retrieves user details along with borrowed books.
+* **Path Parameter:**
+
+  * `card_number` – 6-digit library card number
+* **Response Example:**
+
+```json
+{
+  "user": {
+    "id": 1,
+    "first_name": "John",
+    "last_name": "Doe",
+    "card_number": "654321"
+  },
+  "borrowed_books": [
+    {
+      "serial_number": "123456",
+      "title": "The Great Gatsby",
+      "author": "F. Scott Fitzgerald",
+      "is_borrowed": true,
+      "borrowed_by": "654321",
+      "borrowed_at": "2025-09-01T10:15:00"
+    }
+  ]
+}
+```
+
+* **Errors:**
+
+  * `400` – invalid card number
+  * `404` – user not found
+
+---
+
+#### 4. Delete a user
+
+* **Endpoint:** `DELETE /users/{card_number}`
+* **Description:** Deletes a user and returns any borrowed books to the library.
+* **Path Parameter:**
+
+  * `card_number` – 6-digit library card number
+* **Response:**
+
+```json
+{
+  "detail": "Deleted user successfully",
+  "card_number": "654321"
+}
+```
+
+* **Errors:**
+
+  * `400` – invalid card number
+  * `404` – user not found
+  * `500` – if returning borrowed books fails
+
+
