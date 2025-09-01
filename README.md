@@ -51,11 +51,13 @@ curl -X GET http://localhost:8000/books
 ```
 
 ## Testing
-Unit tests of API endpoints are inside `tests/` directory and can be ran with uv:
+Unit tests of API endpoints are inside `tests/` directory and can be ran with **uv**:
 
 
 ```bash
-
+# inside root of project
+uv sync
+uv run pytest -v tests/test_main.py
 ```
 ## Endpoints Overview
 
