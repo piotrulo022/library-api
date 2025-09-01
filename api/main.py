@@ -113,7 +113,10 @@ async def get_book_by_serial_number(serial_number: str, db: Session = Depends(ge
         raise HTTPException(status_code=400, detail="Serial number is not valid")
 
     repo = BookRepository(db)
-    book = repo.get_by_serial(serial_number)
+    try:
+        book = repo.get_by_serial(serial_number)
+    except OperationalError:
+        raise HTTPException(status_code=503, detail="Database error")
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
     return book
@@ -161,6 +164,8 @@ async def update_book(
         raise HTTPException(status_code=404, detail=str(e))
     except BookAlreadyBorrowed as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except OperationalError:
+        raise HTTPException(status_code=503, detail="Database error")
 
     db.commit()
 
@@ -190,7 +195,11 @@ async def delete_book(serial_number: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Serial number must be 6 digits")
 
     book_repo = BookRepository(db)
-    book = book_repo.delete(serial_number)
+    try:
+        book = book_repo.delete(serial_number)
+    except OperationalError:
+        raise HTTPException(status_code=503, detail="Database error")
+
     if not book:
         raise HTTPException(
             status_code=404, detail=f"Book with {serial_number} not found"
@@ -254,6 +263,8 @@ async def create_new_user(user_data: schemas.UserCreate, db: Session = Depends(g
                 detail=f"User with card number {user_data.card_number} already exists",
             )
         raise HTTPException(status_code=503, detail="Database error")
+    except OperationalError:
+        raise HTTPException(status_code=503, detail="Database error")
 
 
 @app.get(
@@ -263,9 +274,14 @@ async def get_users_info(card_number: str, db: Session = Depends(get_db)):
     if not utils.is_valid_card_number(card_number):
         raise HTTPException(status_code=400, detail="Card number must be 6 digits")
     users_repo = UserRepository(db)
-    user = users_repo.get_by_card_number(card_number)
+    try:
+        user = users_repo.get_by_card_number(card_number)
+    except OperationalError:
+        raise HTTPException(status_code=503, detail="Database error")
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
     borrowed_books = users_repo.get_users_borrowed_books(user)
 
     return schemas.UserWithBooksResponse(
@@ -296,12 +312,16 @@ async def delete_user(card_number: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Card number must be 6 digits")
     users_repo = UserRepository(db)
     books_repo = BookRepository(db)
+    try:
+        user = users_repo.get_by_card_number(card_number)
+    except OperationalError:
+        raise HTTPException(status_code=503, detail="Database error")
 
-    user = users_repo.get_by_card_number(card_number)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     books = users_repo.get_users_borrowed_books(user)
+
     for book in books:
         try:
             books_repo.return_book(book)
