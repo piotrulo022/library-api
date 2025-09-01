@@ -144,12 +144,6 @@ curl -X GET http://localhost:8000/books/123456 -H "accept: application/json"
   "serial_number": "123456"
 }
 ```
-
-* **Errors:**
-
-  * `400` – invalid serial number or book already borrowed/available
-  * `404` – book or user not found
-
 ---
 
 #### 5. Delete a book
@@ -167,11 +161,6 @@ curl -X GET http://localhost:8000/books/123456 -H "accept: application/json"
   "serial_number": "123456"
 }
 ```
-
-* **Errors:**
-
-  * `400` – invalid serial number
-  * `404` – book not found
 
 ---
 
@@ -212,11 +201,6 @@ curl -X GET http://localhost:8000/users/ -H "accept: application/json"
   "card_number": "654321"
 }
 ```
-
-* **Errors:**
-
-  * `400` – user with the same card number already exists
-
 ---
 
 #### 3. Get user info with borrowed books
@@ -249,11 +233,6 @@ curl -X GET http://localhost:8000/users/ -H "accept: application/json"
 }
 ```
 
-* **Errors:**
-
-  * `400` – invalid card number
-  * `404` – user not found
-
 ---
 
 #### 4. Delete a user
@@ -271,11 +250,4 @@ curl -X GET http://localhost:8000/users/ -H "accept: application/json"
   "card_number": "654321"
 }
 ```
-
-* **Errors:**
-
-  * `400` – invalid card number
-  * `404` – user not found
-  * `500` – if returning borrowed books fails
-
 
