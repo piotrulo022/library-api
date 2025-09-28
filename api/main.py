@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from middlewares import add_cors_middleware
 from modules import dbmodule
 from routers import books, users
 
@@ -14,15 +14,8 @@ def get_db():
 
 
 app = FastAPI()
+add_cors_middleware(app)
 
-cors_origins = ["*"]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 app.include_router(books.router)
 app.include_router(users.router)
