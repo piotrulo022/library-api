@@ -11,6 +11,7 @@ sys.path.insert(0, str(api_path))
 
 from main import app, get_db
 from modules import schemas
+from modules.dbmodule import get_db
 from modules.repositories import BookNotFoundError
 
 client = TestClient(app)
@@ -36,7 +37,7 @@ app.dependency_overrides[get_db] = lambda: mock_db
 
 
 def test_get_books_success():
-    with patch("main.BookRepository") as mock_repo:
+    with patch("routers.books.BookRepository") as mock_repo:
         mock_repo.return_value.get_all.return_value = [mock_book]
         response = client.get("/books")
         assert response.status_code == 200
@@ -44,14 +45,14 @@ def test_get_books_success():
 
 
 def test_get_books_database_error():
-    with patch("main.BookRepository") as mock_repo:
+    with patch("routers.books.BookRepository") as mock_repo:
         mock_repo.return_value.get_all.side_effect = OperationalError("", "", "")
         response = client.get("/books")
         assert response.status_code == 503
 
 
 def test_create_book_success():
-    with patch("main.BookRepository") as mock_repo:
+    with patch("routers.books.BookRepository") as mock_repo:
         mock_repo.return_value.add.return_value = Mock(serial_number="123456")
         response = client.post(
             "/books/",
@@ -62,7 +63,7 @@ def test_create_book_success():
 
 
 def test_create_book_duplicate():
-    with patch("main.BookRepository") as mock_repo:
+    with patch("routers.books.BookRepository") as mock_repo:
         mock_repo.return_value.add.side_effect = IntegrityError("", "", "")
         response = client.post(
             "/books/",
@@ -73,8 +74,8 @@ def test_create_book_duplicate():
 
 def test_update_book_not_found():
     with (
-        patch("main.BookRepository") as mock_book_repo,
-        patch("main.UserRepository") as mock_user_repo,
+        patch("routers.books.BookRepository") as mock_book_repo,
+        patch("routers.books.UserRepository") as mock_user_repo,
     ):
         mock_book_repo.return_value.update_book_status.side_effect = BookNotFoundError(
             ""
@@ -92,8 +93,8 @@ def test_update_book_not_found():
 
 def test_delete_user_success():
     with (
-        patch("main.UserRepository") as mock_user_repo,
-        patch("main.BookRepository") as mock_book_repo,
+        patch("routers.users.UserRepository") as mock_user_repo,
+        patch("routers.books.BookRepository") as mock_book_repo,
     ):
         mock_user_repo.return_value.get_by_card_number.return_value = Mock()
         mock_user_repo.return_value.get_users_borrowed_books.return_value = []
